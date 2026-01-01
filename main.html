@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alphabetical Value Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .main-container {
+            display: flex;
+            gap: 20px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            flex: 1;
+        }
+        .history-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 400px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            font-size: 24px;
+            margin-top: 0;
+        }
+        h2 {
+            color: #333;
+            font-size: 20px;
+            margin-top: 0;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .clear-button {
+            background-color: #f44336;
+            margin-top: 10px;
+        }
+        .clear-button:hover {
+            background-color: #da190b;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 5px;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+        .breakdown {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .method {
+            margin-bottom: 15px;
+        }
+        .method label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .method select {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .history-table th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-weight: bold;
+        }
+        .history-table td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .history-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        .no-history {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="container">
+            <h1>Alphabetical Value Calculator</h1>
+            
+            <div class="method">
+                <label for="method">Calculation method:</label>
+                <select id="method">
+                    <option value="simple">Simple average (anagrams equal)</option>
+                    <option value="weighted">Position-weighted (anagrams differ)</option>
+                </select>
+            </div>
+            
+            <input type="text" id="wordInput" placeholder="Enter a word (e.g., GRAT, TARG)" />
+            <button onclick="calculateValue()">Calculate</button>
+            
+            <div id="result" class="result">
+                <h2>Result:</h2>
+                <div id="breakdown"></div>
+                <p><strong>Sum:</strong> <span id="sum"></span></p>
+                <p><strong>Number of letters:</strong> <span id="count"></span></p>
+                <p><strong>Alphabetical value:</strong> <span id="average"></span></p>
+            </div>
+        </div>
+        
+        <div class="history-container">
+            <h2>History</h2>
+            <div id="historyContent">
+                <div class="no-history">No calculations yet</div>
+            </div>
+            <button class="clear-button" onclick="clearHistory()">Clear History</button>
+        </div>
+    </div>
+
+    <script>
+        // Polish alphabet with positions
+        const polishAlphabet = {
+            'A': 1, 'Ą': 2, 'B': 3, 'C': 4, 'Ć': 5, 'D': 6, 'E': 7, 'Ę': 8,
+            'F': 9, 'G': 10, 'H': 11, 'I': 12, 'J': 13, 'K': 14, 'L': 15,
+            'Ł': 16, 'M': 17, 'N': 18, 'Ń': 19, 'O': 20, 'Ó': 21, 'P': 22,
+            'Q': 23, 'R': 24, 'S': 25, 'Ś': 26, 'T': 27, 'U': 28, 'V': 29,
+            'W': 30, 'X': 31, 'Y': 32, 'Z': 33, 'Ź': 34, 'Ż': 35
+        };
+
+        let history = [];
+
+        function calculateValue() {
+            const word = document.getElementById('wordInput').value.toUpperCase();
+            const method = document.getElementById('method').value;
+            
+            if (word.length === 0) {
+                alert('Please enter a word!');
+                return;
+            }
+            
+            // First pass: count letters
+            let letterCount = 0;
+            for (let i = 0; i < word.length; i++) {
+                if (polishAlphabet[word[i]]) {
+                    letterCount++;
+                }
+            }
+            
+            if (letterCount === 0) {
+                alert('No valid letters found!');
+                return;
+            }
+            
+            let sum = 0;
+            let breakdown = '';
+            let letterIndex = 0;
+            
+            for (let i = 0; i < word.length; i++) {
+                const char = word[i];
+                
+                if (polishAlphabet[char]) {
+                    const baseValue = polishAlphabet[char];
+                    let value;
+                    
+                    if (method === 'weighted') {
+                        const weightPercent = 100 - (letterIndex * (100 / letterCount));
+                        const weight = weightPercent / 100;
+                        value = baseValue * weight;
+                        breakdown += `${char} (pos ${letterIndex+1}) = ${baseValue} × ${weightPercent.toFixed(2)}% = ${value.toFixed(2)}<br>`;
+                    } else {
+                        value = baseValue;
+                        breakdown += `${char} = ${value}<br>`;
+                    }
+                    
+                    sum += value;
+                    letterIndex++;
+                }
+            }
+            
+            const average = letterCount > 0 ? (sum / letterCount).toFixed(2) : 0;
+            
+            document.getElementById('breakdown').innerHTML = breakdown;
+            document.getElementById('sum').textContent = sum.toFixed(2);
+            document.getElementById('count').textContent = letterCount;
+            document.getElementById('average').textContent = average;
+            document.getElementById('result').classList.add('show');
+            
+            // Add to history
+            history.unshift({
+                word: word,
+                method: method === 'weighted' ? 'Weighted' : 'Simple',
+                sum: sum.toFixed(2),
+                letters: letterCount,
+                value: average
+            });
+            
+            // Keep only last 10 results
+            if (history.length > 10) {
+                history = history.slice(0, 10);
+            }
+            
+            updateHistory();
+        }
+        
+        function updateHistory() {
+            const historyContent = document.getElementById('historyContent');
+            
+            if (history.length === 0) {
+                historyContent.innerHTML = '<div class="no-history">No calculations yet</div>';
+                return;
+            }
+            
+            let tableHTML = '<table class="history-table">';
+            tableHTML += '<thead><tr><th>Word</th><th>Method</th><th>Value</th></tr></thead>';
+            tableHTML += '<tbody>';
+            
+            history.forEach(item => {
+                tableHTML += `<tr>
+                    <td><strong>${item.word}</strong></td>
+                    <td>${item.method}</td>
+                    <td>${item.value}</td>
+                </tr>`;
+            });
+            
+            tableHTML += '</tbody></table>';
+            historyContent.innerHTML = tableHTML;
+        }
+        
+        function clearHistory() {
+            if (confirm('Clear all history?')) {
+                history = [];
+                updateHistory();
+            }
+        }
+        
+        // Handle Enter key
+        document.getElementById('wordInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                calculateValue();
+            }
+        });
+    </script>
+</body>
+</html>
