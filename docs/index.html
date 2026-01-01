@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alphabetical Value Calculator</title>
+    <title>Word2Number</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,6 +15,7 @@
         .main-container {
             display: flex;
             gap: 20px;
+            flex-wrap: wrap;
         }
         .container {
             background: white;
@@ -22,13 +23,15 @@
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             flex: 1;
+            min-width: 300px;
         }
         .history-container {
             background: white;
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            width: 400px;
+            flex: 1;
+            min-width: 300px;
         }
         h1 {
             color: #333;
@@ -125,12 +128,27 @@
             padding: 20px;
             font-style: italic;
         }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            body {
+                margin: 20px auto;
+                padding: 10px;
+            }
+            .main-container {
+                flex-direction: column;
+            }
+            .container, .history-container {
+                width: 100%;
+                min-width: unset;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="main-container">
         <div class="container">
-            <h1>Alphabetical Value Calculator</h1>
+            <h1>Word2Number</h1>
             
             <div class="method">
                 <label for="method">Calculation method:</label>
